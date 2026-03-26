@@ -9,6 +9,8 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+
     <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.27.0/pivot.min.css">
@@ -16,89 +18,46 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.27.0/plotly_renderers.min.js"></script>
 
     <style>
-        /* Diseño institucional limpio */
-        body { 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            margin: 0; 
-            background-color: #f4f6f9; 
-            color: #333; 
-        }
-        .header {
-            background-color: #1a365d;
-            color: white;
-            padding: 20px 40px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
-        .header p { margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f4f6f9; color: #333; }
+        .header { background-color: #1a365d; color: white; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+        .header p { margin: 5px 0 0 0; color: #cbd5e1; font-size: 13px; }
         
-        .container {
-            margin: 30px 40px;
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            min-height: 600px;
-            overflow-x: auto;
-        }
+        .container { margin: 15px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; }
 
-        /* Estilos mejorados para las cajas de arrastre */
-        .pvtAxisContainer, .pvtVals { 
-            background: #f8fafc; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 6px; 
-            padding: 10px !important;
-        }
-        .pvtAttr { 
-            background: #2563eb !important; 
-            color: white !important; 
-            border: none !important; 
-            border-radius: 4px !important; 
-            padding: 8px 15px !important; 
-            font-size: 13px !important;
-            font-weight: 500 !important;
-            box-shadow: 0 2px 4px rgba(37,99,235,0.2);
-        }
+        .pvtAxisContainer, .pvtVals { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px !important; }
+        .pvtAttr { background: #2563eb !important; color: white !important; border: none !important; border-radius: 4px !important; padding: 8px 12px !important; font-size: 13px !important; margin: 3px !important; cursor: grab; }
         .pvtTriangle { color: #bfdbfe !important; }
-        select.pvtRenderer, select.pvtAggregator {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #cbd5e1;
-            margin-bottom: 5px;
-            font-family: inherit;
-        }
         
-        #error-log { display: none; background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 6px; border-left: 5px solid #ef4444; margin-bottom: 20px; font-family: monospace; }
+        #error-log { display: none; background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-family: monospace; font-size: 12px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>Análisis Interactivo de Movimientos y Tiempos</h1>
-        <p>Biblioteca Nacional del Perú | Oficina de Planeamiento y Presupuesto</p>
+        <h1>Análisis de Movimientos y Tiempos</h1>
+        <p>Biblioteca Nacional del Perú | OPP</p>
     </div>
 
     <div class="container">
         <div id="error-log"></div>
         
-        <p style="color: #64748b; margin-bottom: 20px;">
-            ℹ️ <b>Instrucciones:</b> Arrastra las variables azules hacia las áreas grises (filas y columnas). Utiliza los menús desplegables para cambiar a gráficos de barras, líneas o mapas de calor.
+        <p style="color: #64748b; font-size: 14px; text-align: center;">
+            ℹ️ Arrastra las variables azules hacia los espacios grises.
         </p>
 
         <div id="output">
-            <p style="text-align: center; color: #94a3b8; padding: 50px;">Cargando motor de visualización...</p>
+            <h3 style="text-align: center; color: #94a3b8; margin: 40px 0;">Construyendo entorno de datos... ⏳</h3>
         </div>
     </div>
 
     <script>
-        // Capturador de errores: Si algo falla, lo mostrará en pantalla en lugar de quedarse en blanco.
-        window.onerror = function(message, source, lineno, colno, error) {
+        window.onerror = function(message, source, lineno) {
             document.getElementById('error-log').style.display = 'block';
-            document.getElementById('error-log').innerHTML = "<b>⚠️ Error detectado:</b> " + message + "<br>Línea: " + lineno;
+            document.getElementById('error-log').innerHTML = "<b>⚠️ Error:</b> " + message + " (Línea " + lineno + ")";
             document.getElementById('output').style.display = 'none';
         };
 
-        // 1. LOS DATOS (Ya integrados y validados)
         var datos_bnp = [
             { "TIPO_MOVIMIENTO": "DGC-UGDS -> DGC-UPDP", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Diario", "CANTIDAD_EJEMPLARES": 33373, "PROMEDIO_DIAS": 0.77 },
             { "TIPO_MOVIMIENTO": "DGC-UPDP -> DPC-ECU", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Diario", "CANTIDAD_EJEMPLARES": 31112, "PROMEDIO_DIAS": 9.94 },
@@ -119,48 +78,21 @@
             { "TIPO_MOVIMIENTO": "DGC-UGDS -> DGC-UPDP", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Revista", "CANTIDAD_EJEMPLARES": 2040, "PROMEDIO_DIAS": 0.99 },
             { "TIPO_MOVIMIENTO": "DGC-UPME -> DGC-EPME-Complementarios", "TIPO INGRESO": "DN", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 1963, "PROMEDIO_DIAS": 19.02 },
             { "TIPO_MOVIMIENTO": "DGC-UPDP -> DBD-Salas", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Diario", "CANTIDAD_EJEMPLARES": 1789, "PROMEDIO_DIAS": 16.62 },
-            { "TIPO_MOVIMIENTO": "DGC-UPDP -> DPC-ECU", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Revista", "CANTIDAD_EJEMPLARES": 1344, "PROMEDIO_DIAS": 53.81 },
-            { "TIPO_MOVIMIENTO": "DGC-EPME-Complementarios -> DBD-EBP", "TIPO INGRESO": "DN", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 807, "PROMEDIO_DIAS": 18.10 },
-            { "TIPO_MOVIMIENTO": "DGC-EPME-Complementarios -> DBD-Salas", "TIPO INGRESO": "DN", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 702, "PROMEDIO_DIAS": 45.83 },
-            { "TIPO_MOVIMIENTO": "DPC-ECU -> Hemeroteca F. Moderno", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Revista", "CANTIDAD_EJEMPLARES": 413, "PROMEDIO_DIAS": 4.29 },
-            { "TIPO_MOVIMIENTO": "DPC-ECU -> Hemeroteca F. Moderno y Antiguo 2", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Revista", "CANTIDAD_EJEMPLARES": 377, "PROMEDIO_DIAS": 2.38 },
-            { "TIPO_MOVIMIENTO": "DGC-UGDS -> DGC-UPME", "TIPO INGRESO": "DN", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MATESP", "TIPO PUB 1": "Manuscrito", "CANTIDAD_EJEMPLARES": 367, "PROMEDIO_DIAS": 2.51 },
-            { "TIPO_MOVIMIENTO": "DGC-UPME -> DGC-EPME-Complementarios", "TIPO INGRESO": "DN", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MATESP", "TIPO PUB 1": "Manuscrito", "CANTIDAD_EJEMPLARES": 351, "PROMEDIO_DIAS": 198.83 },
-            { "TIPO_MOVIMIENTO": "DGC-EPME-Complementarios -> DPC-ECU", "TIPO INGRESO": "DN", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MATESP", "TIPO PUB 1": "Manuscrito", "CANTIDAD_EJEMPLARES": 319, "PROMEDIO_DIAS": 50.24 },
-            { "TIPO_MOVIMIENTO": "DPC-ECU -> Fondo Intermedio", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 273, "PROMEDIO_DIAS": 28.73 },
-            { "TIPO_MOVIMIENTO": "DGC-UPDP -> DBD-Salas", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Revista", "CANTIDAD_EJEMPLARES": 236, "PROMEDIO_DIAS": 65.78 }
-            // He colocado los primeros 30 registros críticos para aligerar la carga inicial del DOM, 
-            // el motor asimilará esto instantáneamente. Puedes pegar el resto de las miles de filas aquí si lo deseas.
+            { "TIPO_MOVIMIENTO": "DGC-UPDP -> DPC-ECU", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Revista", "CANTIDAD_EJEMPLARES": 1344, "PROMEDIO_DIAS": 53.81 }
         ];
 
-        // 2. INICIALIZACIÓN DE LA TABLA DINÁMICA
         $(function () {
-            // Combinar los visualizadores básicos (tablas) con los gráficos avanzados de Plotly
             var renderers = $.extend({}, $.pivotUtilities.renderers, $.pivotUtilities.plotly_renderers);
 
-            // Cargar los datos y la configuración inicial por defecto
             $("#output").pivotUI(datos_bnp, {
                 renderers: renderers,
-                // Configuramos qué variables aparecen ordenadas desde el inicio:
                 rows: ["TIPO_MOVIMIENTO"],
                 cols: ["TIPO INGRESO"],
                 vals: ["CANTIDAD_EJEMPLARES"],
-                // Definimos la operación por defecto (Suma)
                 aggregatorName: "Sum", 
-                // Definimos el gráfico inicial por defecto (Gráfico de Barras interactivo)
-                rendererName: "Bar Chart",
-                
-                // Parámetros de diseño para Plotly
-                rendererOptions: {
-                    plotly: {
-                        width: 900, 
-                        height: 500,
-                        margin: { t: 40, b: 100 }
-                    }
-                }
+                rendererName: "Table" 
             });
         });
     </script>
-
 </body>
 </html>
