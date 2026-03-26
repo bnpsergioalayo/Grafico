@@ -3,94 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Movimientos | BNP - Planeamiento y Presupuesto</title>
+    <title>Dashboard de Movimientos | BNP</title>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-ui-dist@1.12.1/jquery-ui.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-ui-dist@1.12.1/jquery-ui.min.css">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-ui-touch-punch@0.2.3/jquery.ui.touch-punch.min.js" crossorigin="anonymous"></script>
 
-    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.27.0/pivot.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.27.0/pivot.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.27.0/plotly_renderers.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pivottable@2.27.0/dist/pivot.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/pivottable@2.27.0/dist/pivot.min.js" crossorigin="anonymous"></script>
 
     <style>
         body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f4f6f9; color: #333; }
         .header { background-color: #1a365d; color: white; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
-        .header p { margin: 5px 0 0 0; color: #cbd5e1; font-size: 13px; }
-        
         .container { margin: 15px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; }
-
         .pvtAxisContainer, .pvtVals { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px !important; }
         .pvtAttr { background: #2563eb !important; color: white !important; border: none !important; border-radius: 4px !important; padding: 8px 12px !important; font-size: 13px !important; margin: 3px !important; cursor: grab; }
-        .pvtTriangle { color: #bfdbfe !important; }
-        
         #error-log { display: none; background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-family: monospace; font-size: 12px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>Análisis de Movimientos y Tiempos</h1>
-        <p>Biblioteca Nacional del Perú | OPP</p>
+        <h1>Análisis de Movimientos - Modo Seguro</h1>
     </div>
 
     <div class="container">
         <div id="error-log"></div>
-        
-        <p style="color: #64748b; font-size: 14px; text-align: center;">
-            ℹ️ Arrastra las variables azules hacia los espacios grises.
-        </p>
-
         <div id="output">
-            <h3 style="text-align: center; color: #94a3b8; margin: 40px 0;">Construyendo entorno de datos... ⏳</h3>
+            <h3 style="text-align: center; color: #94a3b8; margin: 40px 0;">Cargando motor... ⏳</h3>
         </div>
     </div>
 
     <script>
-        window.onerror = function(message, source, lineno) {
+        // Capturador de errores avanzado
+        window.onerror = function(message, source, lineno, colno, error) {
             document.getElementById('error-log').style.display = 'block';
-            document.getElementById('error-log').innerHTML = "<b>⚠️ Error:</b> " + message + " (Línea " + lineno + ")";
+            document.getElementById('error-log').innerHTML = "<b>⚠️ Error Real:</b> " + message + "<br><b>Archivo:</b> " + source + "<br><b>Línea:</b> " + lineno;
             document.getElementById('output').style.display = 'none';
         };
 
         var datos_bnp = [
             { "TIPO_MOVIMIENTO": "DGC-UGDS -> DGC-UPDP", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Diario", "CANTIDAD_EJEMPLARES": 33373, "PROMEDIO_DIAS": 0.77 },
             { "TIPO_MOVIMIENTO": "DGC-UPDP -> DPC-ECU", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Diario", "CANTIDAD_EJEMPLARES": 31112, "PROMEDIO_DIAS": 9.94 },
-            { "TIPO_MOVIMIENTO": "DGC-UGDS -> DGC-UPME", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 26218, "PROMEDIO_DIAS": 1.42 },
-            { "TIPO_MOVIMIENTO": "DGC-UPME -> DGC-EPME-Complementarios", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 24265, "PROMEDIO_DIAS": 21.13 },
-            { "TIPO_MOVIMIENTO": "DGC-UGDS -> DDPB", "TIPO INGRESO": "DN", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 20357, "PROMEDIO_DIAS": 13.73 },
-            { "TIPO_MOVIMIENTO": "DGC-EPME-Complementarios -> DPC-ECU", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 15801, "PROMEDIO_DIAS": 53.20 },
-            { "TIPO_MOVIMIENTO": "DDPB -> DGAB-UPGB-MODULO-GBPL", "TIPO INGRESO": "DN", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 14967, "PROMEDIO_DIAS": 25.50 },
-            { "TIPO_MOVIMIENTO": "DPC-ECU -> Fondo Moderno", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 14433, "PROMEDIO_DIAS": 28.35 },
-            { "TIPO_MOVIMIENTO": "DPC-ECU -> Hemeroteca F. Moderno", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Diario", "CANTIDAD_EJEMPLARES": 10875, "PROMEDIO_DIAS": 21.24 },
-            { "TIPO_MOVIMIENTO": "DGC-EPME-Complementarios -> DBD-Salas", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 7610, "PROMEDIO_DIAS": 57.25 },
-            { "TIPO_MOVIMIENTO": "DPC-ECU -> Hemeroteca F. Moderno y Antiguo 2", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Diario", "CANTIDAD_EJEMPLARES": 5734, "PROMEDIO_DIAS": 22.56 },
-            { "TIPO_MOVIMIENTO": "DPC-ECU -> Hemeroteca F. Moderno y Antiguo 1", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Diario", "CANTIDAD_EJEMPLARES": 5485, "PROMEDIO_DIAS": 20.34 },
-            { "TIPO_MOVIMIENTO": "DGC-UGDS -> DGC-UPDP", "TIPO INGRESO": "DL", "TIPO RESERVA": "Digital", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 2432, "PROMEDIO_DIAS": 6.58 },
-            { "TIPO_MOVIMIENTO": "DGC-UPDP -> DPC-ECU", "TIPO INGRESO": "DL", "TIPO RESERVA": "Digital", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 2424, "PROMEDIO_DIAS": 25.40 },
-            { "TIPO_MOVIMIENTO": "DPC-ECU -> Material Digital", "TIPO INGRESO": "DL", "TIPO RESERVA": "Digital", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 2332, "PROMEDIO_DIAS": 104.53 },
-            { "TIPO_MOVIMIENTO": "DGC-UGDS -> DGC-UPME", "TIPO INGRESO": "DN", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 2050, "PROMEDIO_DIAS": 3.43 },
-            { "TIPO_MOVIMIENTO": "DGC-UGDS -> DGC-UPDP", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Revista", "CANTIDAD_EJEMPLARES": 2040, "PROMEDIO_DIAS": 0.99 },
-            { "TIPO_MOVIMIENTO": "DGC-UPME -> DGC-EPME-Complementarios", "TIPO INGRESO": "DN", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 1963, "PROMEDIO_DIAS": 19.02 },
-            { "TIPO_MOVIMIENTO": "DGC-UPDP -> DBD-Salas", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Diario", "CANTIDAD_EJEMPLARES": 1789, "PROMEDIO_DIAS": 16.62 },
-            { "TIPO_MOVIMIENTO": "DGC-UPDP -> DPC-ECU", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Revista", "CANTIDAD_EJEMPLARES": 1344, "PROMEDIO_DIAS": 53.81 }
+            { "TIPO_MOVIMIENTO": "DGC-UGDS -> DGC-UPME", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 26218, "PROMEDIO_DIAS": 1.42 }
         ];
 
         $(function () {
-            var renderers = $.extend({}, $.pivotUtilities.renderers, $.pivotUtilities.plotly_renderers);
-
+            // Inicialización pura (Sin gráficos)
             $("#output").pivotUI(datos_bnp, {
-                renderers: renderers,
                 rows: ["TIPO_MOVIMIENTO"],
                 cols: ["TIPO INGRESO"],
                 vals: ["CANTIDAD_EJEMPLARES"],
-                aggregatorName: "Sum", 
-                rendererName: "Table" 
+                aggregatorName: "Sum"
             });
         });
     </script>
