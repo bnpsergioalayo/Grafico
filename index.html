@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Movimientos | BNP</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery-ui-dist@1.12.1/jquery-ui.min.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-ui-dist@1.12.1/jquery-ui.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery-ui-touch-punch@0.2.3/jquery.ui.touch-punch.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pivottable@2.27.0/dist/pivot.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/pivottable@2.27.0/dist/pivot.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.27.0/pivot.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.27.0/pivot.min.js"></script>
 
     <style>
         body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f4f6f9; color: #333; }
@@ -20,13 +21,13 @@
         .container { margin: 15px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; }
         .pvtAxisContainer, .pvtVals { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px !important; }
         .pvtAttr { background: #2563eb !important; color: white !important; border: none !important; border-radius: 4px !important; padding: 8px 12px !important; font-size: 13px !important; margin: 3px !important; cursor: grab; }
-        #error-log { display: none; background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-family: monospace; font-size: 12px; }
+        #error-log { display: none; background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-family: monospace; font-size: 14px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>Análisis de Movimientos - Modo Seguro</h1>
+        <h1 style="margin:0; font-size:20px;">Análisis de Movimientos - BNP</h1>
     </div>
 
     <div class="container">
@@ -37,27 +38,35 @@
     </div>
 
     <script>
-        // Capturador de errores avanzado
-        window.onerror = function(message, source, lineno, colno, error) {
-            document.getElementById('error-log').style.display = 'block';
-            document.getElementById('error-log').innerHTML = "<b>⚠️ Error Real:</b> " + message + "<br><b>Archivo:</b> " + source + "<br><b>Línea:</b> " + lineno;
-            document.getElementById('output').style.display = 'none';
-        };
-
         var datos_bnp = [
             { "TIPO_MOVIMIENTO": "DGC-UGDS -> DGC-UPDP", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Diario", "CANTIDAD_EJEMPLARES": 33373, "PROMEDIO_DIAS": 0.77 },
             { "TIPO_MOVIMIENTO": "DGC-UPDP -> DPC-ECU", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "PUBPER", "TIPO PUB 1": "Diario", "CANTIDAD_EJEMPLARES": 31112, "PROMEDIO_DIAS": 9.94 },
-            { "TIPO_MOVIMIENTO": "DGC-UGDS -> DGC-UPME", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 26218, "PROMEDIO_DIAS": 1.42 }
+            { "TIPO_MOVIMIENTO": "DGC-UGDS -> DGC-UPME", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 26218, "PROMEDIO_DIAS": 1.42 },
+            { "TIPO_MOVIMIENTO": "DGC-UGDS -> DDPB", "TIPO INGRESO": "DN", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 20357, "PROMEDIO_DIAS": 13.73 },
+            { "TIPO_MOVIMIENTO": "DGC-EPME-Complementarios -> DPC-ECU", "TIPO INGRESO": "DL", "TIPO RESERVA": "Físico", "TIPO PUB 0": "MONOGR", "TIPO PUB 1": "Libro O Folleto", "CANTIDAD_EJEMPLARES": 15801, "PROMEDIO_DIAS": 53.20 }
         ];
 
-        $(function () {
-            // Inicialización pura (Sin gráficos)
-            $("#output").pivotUI(datos_bnp, {
-                rows: ["TIPO_MOVIMIENTO"],
-                cols: ["TIPO INGRESO"],
-                vals: ["CANTIDAD_EJEMPLARES"],
-                aggregatorName: "Sum"
-            });
+        $(document).ready(function () {
+            // El "Semáforo": Verificamos si la herramienta existe antes de usarla
+            if (typeof $.fn.pivotUI === 'undefined') {
+                document.getElementById('error-log').style.display = 'block';
+                document.getElementById('error-log').innerHTML = "<b>⚠️ Fallo de conexión:</b> La librería PivotTable no se pudo descargar. Esto suele ocurrir por un bloqueo de red o antivirus.";
+                document.getElementById('output').style.display = 'none';
+            } else {
+                // Si existe, dibujamos la tabla
+                try {
+                    $("#output").pivotUI(datos_bnp, {
+                        rows: ["TIPO_MOVIMIENTO"],
+                        cols: ["TIPO INGRESO"],
+                        vals: ["CANTIDAD_EJEMPLARES"],
+                        aggregatorName: "Sum"
+                    });
+                } catch (e) {
+                    document.getElementById('error-log').style.display = 'block';
+                    document.getElementById('error-log').innerHTML = "<b>⚠️ Error al armar la tabla:</b> " + e.message;
+                    document.getElementById('output').style.display = 'none';
+                }
+            }
         });
     </script>
 </body>
